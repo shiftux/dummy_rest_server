@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: twint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rest-routes
+  namespace: twint
+  annotations:
+  labels:
+    app: rest
+spec:
+  ports:
+  - name: rest-port
+    protocol: TCP
+    port: 80
+    targetPort: rest-port-host
+  selector:
+    app: rest
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: twint
+  name: rest-routes
+  labels:
+    app: rest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rest
+  template:
+    metadata:
+      namespace: twint
+      labels:
+        app: rest
+    spec:
+      containers:
+      - name: rest-routes
+        image: 'eu.gcr.io/twint-greefield/rest_routes:latest'
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: rest-port-host

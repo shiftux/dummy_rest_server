@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: twint
+  name: rest-test
+spec:
+  template:
+    spec:
+      containers:
+      - name: rest-test
+        image: eu.gcr.io/twint-greefield/rest_test:latest
+        imagePullPolicy: Always
+        env:
+          - name: RUNNING_ON_K8S
+            value: "yes"
+      restartPolicy: Never
+  backoffLimit: 4

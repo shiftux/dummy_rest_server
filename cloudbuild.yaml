@@ -1,0 +1,54 @@
+steps:
+
+########################################
+# build and push images
+########################################
+
+- id: 'build application image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
+
+- id: 'build test image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
+  waitFor: ['-']
+
+- id: 'push app image to registry'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}"]
+  waitFor: ['build application image']
+
+- id: 'push test image to registry'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}"]
+  waitFor: ['build test image']
+
+########################################
+# deploy images on k8s
+########################################
+
+- id: 'delete old jobs'
+  name: "gcr.io/cloud-builders/kubectl"
+  args: ["delete", "job", "rest-test"]
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['-']
+
+- id: 'set new images'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml && \
+     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml
+  waitFor: ['push app image to registry', 'push app test to registry']
+
+- id: 'deploy app'
+  name: "gcr.io/cloud-builders/kubectl"
+  args: ["apply", "-f", "k8s/app.yaml"]
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['set new images']

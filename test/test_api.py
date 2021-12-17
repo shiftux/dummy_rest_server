@@ -2,11 +2,14 @@ import os
 import pytest
 import requests
 
-if os.getenv('RUNNING_IN_DOCKER') is None:
-    host = '127.0.0.1'
+if os.getenv('RUNNING_ON_K8S') == 'yes':
+    host = 'rest-routes.twint.svc.cluster.local'
+    port = 80
+elif os.getenv('RUNNING_IN_DOCKER') == 'yes':
+    host = 'rest_routes'
     port = 3000
 else:
-    host = 'rest_routes'
+    host = '127.0.0.1'
     port = 5000
 
 endpoints = [
