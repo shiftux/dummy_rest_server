@@ -35,20 +35,71 @@ steps:
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
   waitFor: ['-']
 
-- id: 'set new images'
+- id: 'set new images and deploy'
   name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: /bin/sh
   args:
   - '-c'
   - |
-     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml && \
-     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml
-  waitFor: ['push app image to registry', 'push app test to registry']
-
-- id: 'deploy app'
-  name: "gcr.io/cloud-builders/kubectl"
-  args: ["apply", "-f", "k8s/app.yaml"]
+     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
+     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-  waitFor: ['set new images']
+  waitFor: ['push app image to registry', 'push test image to registry']
+
+# - id: 'deploy app'
+#   name: "gcr.io/cloud-builders/kubectl"
+#   args: ["apply", "-f", "k8s/app.yaml"]
+#   env:
+#     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+#     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+#   waitFor: ['set new images']
+
+########################################
+# run tests
+########################################
+
+- id: 'run test job'
+  name: "gcr.io/cloud-builders/kubectl"
+  args: ["create", "-f", "k8s/test_job.yaml"]
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['set new images and deploy']
+
+########################################
+# tag images according to test results and redeploy
+########################################
+
+- id: 'check if tests succeeded'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     job=$(kubectl get job test-job -o jsonpath='{.status.succeeded}')
+     if [ "$job" = "Completed" ]; then
+       echo "tests have passed, updating latest tag"
+       docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
+       docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
+       kubectl apply -f k8s/app.yaml
+     else
+       echo "tests have failed, not updating latest tag"
+     fi
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['run test job']
+
+########################################
+# cleanup
+########################################
+
+- id: 'cleanup'
+  name: "gcr.io/cloud-builders/kubectl"
+  args: ["delete", "job", "rest-test"]
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['check if tests succeeded']
