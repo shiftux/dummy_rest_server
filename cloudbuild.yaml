@@ -123,7 +123,7 @@ steps:
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
   waitFor: ['run test job']
 
-- id: 'update images and redeploy'
+- id: 'update images'
   name: 'gcr.io/cloud-builders/docker'
   entrypoint: /bin/sh
   args:
@@ -133,14 +133,28 @@ steps:
        echo "tests have passed, updating latest tag"
        docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
        docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
+     else
+       echo "tests have failed"
+     fi
+  waitFor: ['check if tests succeeded']
+
+- id: 'redeploy'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     if [ -f tests.passed ]; then
+       echo "tests have passed, redeploying the app"
        kubectl apply -f k8s/app.yaml
      else
        echo "tests have failed"
      fi
+     rm -rf tests.passed tests.failed
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-  waitFor: ['check if tests succeeded']
+  waitFor: ['update images']
 
 ########################################
 # deploy to prod cluster after successful build
@@ -162,4 +176,4 @@ steps:
 #   env:
 #     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
 #     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-#   waitFor: ['update images and redeploy']
+#   waitFor: ['redeploy']
