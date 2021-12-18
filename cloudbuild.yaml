@@ -1,7 +1,7 @@
 steps:
 
 ########################################
-# build and push images
+# build and push images, tagged with ${SHORT_SHA}
 ########################################
 
 - id: 'build application image'
@@ -29,7 +29,11 @@ steps:
 
 - id: 'delete old jobs'
   name: "gcr.io/cloud-builders/kubectl"
-  args: ["delete", "job", "rest-test"]
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     kubectl delete job rest-test || exit 0
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
