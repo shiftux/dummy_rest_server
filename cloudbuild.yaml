@@ -107,7 +107,7 @@ steps:
   args:
   - '-c'
   - |
-     sleep 10
+     sleep 20
      echo "get jobs output: $(kubectl -n twint get jobs)"
      job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
      echo "job output is : \"$job\". expecting this to be \"1\""
