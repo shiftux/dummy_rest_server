@@ -53,7 +53,9 @@ steps:
   - '-c'
   - |
      gcloud container clusters get-credentials --zone "$$CLOUDSDK_COMPUTE_ZONE" "$$CLOUDSDK_CONTAINER_CLUSTER"
+     echo "get jobs output before: $(kubectl get jobs)"
      kubectl delete job rest-test || exit 0
+     echo "get jobs output after: $(kubectl get jobs)"
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
