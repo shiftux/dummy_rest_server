@@ -70,7 +70,7 @@ steps:
   args:
   - '-c'
   - |
-     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
+     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eeu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
@@ -99,6 +99,12 @@ steps:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
   waitFor: ['run test job']
+
+########################################
+# deploy to prod cluster after successful build
+########################################
+
+# ommitted
 
 ########################################
 # cleanup
