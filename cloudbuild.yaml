@@ -131,8 +131,8 @@ steps:
   - |
      if [ -f tests.passed ]; then
        echo "tests have passed, updating latest tag"
-       docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
-       docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
+       docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest
+       docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest
      else
        echo "tests have failed"
      fi
