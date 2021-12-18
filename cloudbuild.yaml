@@ -105,6 +105,7 @@ steps:
   args:
   - '-c'
   - |
+     echo "get jobs output: $(kubectl get jobs)"
      job=$(kubectl get job rest-test -o jsonpath='{.status.succeeded}')
      echo "job output is : \"$job\". expecting this to be \"1\""
      if [ "$job" = "1" ]; then
