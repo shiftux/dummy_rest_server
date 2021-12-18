@@ -53,9 +53,9 @@ steps:
   - '-c'
   - |
      gcloud container clusters get-credentials --zone "$$CLOUDSDK_COMPUTE_ZONE" "$$CLOUDSDK_CONTAINER_CLUSTER"
-     echo "get jobs output before: $(kubectl get jobs)"
-     kubectl delete job rest-test || exit 0
-     echo "get jobs output after: $(kubectl get jobs)"
+     echo "get jobs output before: $(kubectl -n twint get jobs)"
+     kubectl -n twint delete job rest-test || exit 0
+     echo "get jobs output after: $(kubectl -n twint get jobs)"
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
@@ -107,8 +107,8 @@ steps:
   args:
   - '-c'
   - |
-     echo "get jobs output: $(kubectl get jobs)"
-     job=$(kubectl get job rest-test -o jsonpath='{.status.succeeded}')
+     echo "get jobs output: $(kubectl -n twint get jobs)"
+     job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
      echo "job output is : \"$job\". expecting this to be \"1\""
      if [ "$job" = "1" ]; then
        echo "tests have passed, updating latest tag"
@@ -139,7 +139,7 @@ steps:
   args:
   - '-c'
   - |
-     kubectl delete job rest-test || exit 0
+     kubectl -n twint delete job rest-test || exit 0
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
