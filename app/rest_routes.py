@@ -1,8 +1,22 @@
 from flask import Flask
 import text_replies
+import os
+import werkzeug
 
 api = Flask(__name__)
 api.debug = True
+
+
+@api.errorhandler(werkzeug.exceptions.NotFound)
+def handle_not_found(e):
+    api.logger.error("trying to access inexisting route!")
+    return "route not found!\n", 404
+
+
+@api.errorhandler(werkzeug.exceptions.BadRequest)
+def handle_bad_request(e):
+    api.logger.error("bad request!")
+    return "bad request!\n", 400
 
 
 @api.route('/dirk', methods=['GET'])
@@ -31,4 +45,9 @@ def get_sandro():
 
 
 if __name__ == '__main__':
-    api.run(host='0.0.0.0')
+    if os.getenv('RUNNING_ON_K8S') == 'yes':
+        api.run(host='0.0.0.0')
+    elif os.getenv('RUNNING_IN_DOCKER') == 'yes':
+        api.run(host='0.0.0.0')
+    else:
+        api.run()

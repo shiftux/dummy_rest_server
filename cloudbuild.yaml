@@ -68,6 +68,9 @@ steps:
   - '-c'
   - |
      sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - \
+     while [[ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]];
+       do echo "waiting for pod to run" && sleep 1;
+     done
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
@@ -107,7 +110,10 @@ steps:
   args:
   - '-c'
   - |
-     sleep 20
+     while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
+       $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+       echo "waiting for job to complete" && sleep 1;
+     done
      echo "get jobs output: $(kubectl -n twint get jobs)"
      job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
      echo "job output is : \"$job\". expecting this to be \"1\""

@@ -14,4 +14,4 @@ spec:
           - name: RUNNING_ON_K8S
             value: 'yes'
       restartPolicy: Never
-  backoffLimit: 2
+  backoffLimit: 1
