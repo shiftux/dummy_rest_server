@@ -113,8 +113,8 @@ steps:
      echo "job output is : \"$job\". expecting this to be \"1\""
      if [ "$job" = "1" ]; then
        echo "tests have passed, updating latest tag"
-       docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
-       docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
+       /bin/docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
+       /bin/docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
        kubectl apply -f k8s/app.yaml
      else
        echo "tests have failed, not updating latest tag"
