@@ -28,7 +28,7 @@ steps:
 ########################################
 
 - id: 'delete old jobs'
-  name: "gcr.io/cloud-builders/kubectl"
+  name: "gcr.io/cloud-builders/gcloud"
   entrypoint: /bin/sh
   args:
   - '-c'
