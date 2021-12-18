@@ -47,7 +47,6 @@ steps:
   - '-c'
   - |
      sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
-     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
@@ -66,8 +65,12 @@ steps:
 ########################################
 
 - id: 'run test job'
-  name: "gcr.io/cloud-builders/kubectl"
-  args: ["create", "-f", "k8s/test_job.yaml"]
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
