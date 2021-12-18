@@ -6,7 +6,7 @@ RUN apt-get update -y && \
 
 ENV RUNNING_IN_DOCKER yes
 
-ADD test/est_api.py /
+ADD test/test_api.py /
 
 RUN pip install pytest requests
 
