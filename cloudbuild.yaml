@@ -123,7 +123,7 @@ steps:
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
   waitFor: ['run test job']
 
-- id: 'check if tests succeeded'
+- id: 'update images and redeploy'
   name: 'gcr.io/cloud-builders/docker'
   entrypoint: /bin/sh
   args:
@@ -162,4 +162,4 @@ steps:
 #   env:
 #     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
 #     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-#   waitFor: ['check if tests succeeded']
+#   waitFor: ['update images and redeploy']
