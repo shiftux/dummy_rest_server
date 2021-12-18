@@ -86,8 +86,8 @@ steps:
   args:
   - '-c'
   - |
-     job=$(kubectl get job test-job -o jsonpath='{.status.succeeded}')
-     if [ "$job" = "Completed" ]; then
+     job=$(kubectl get job rest-test -o jsonpath='{.status.succeeded}')
+     if [ "$job" = "1" ]; then
        echo "tests have passed, updating latest tag"
        docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
        docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest && \
