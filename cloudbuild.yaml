@@ -33,7 +33,7 @@ steps:
   args:
   - '-c'
   - |
-     echo "-------------------   cluster name env var : ${CLOUDSDK_CONTAINER_CLUSTER}"
+     echo "-------------------   cluster name env var : $CLOUDSDK_CONTAINER_CLUSTER"
      gcloud container clusters get-credentials --zone "$CLOUDSDK_COMPUTE_ZONE" "$CLOUDSDK_CONTAINER_CLUSTER"
      kubectl delete job rest-test || exit 0
   env:
