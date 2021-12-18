@@ -4,13 +4,22 @@ steps:
 # build and push images, tagged with ${SHORT_SHA}
 ########################################
 
+# - id: 'build application image'
+#   name: 'gcr.io/cloud-builders/docker'
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
+
+# - id: 'build test image'
+#   name: 'gcr.io/cloud-builders/docker'
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
+#   waitFor: ['-']
+
 - id: 'build application image'
   name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_routes:latest", "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}"]
 
 - id: 'build test image'
   name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_test:latest", "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}"]
   waitFor: ['-']
 
 - id: 'push app image to registry'
@@ -87,7 +96,7 @@ steps:
   - '-c'
   - |
      job=$(kubectl get job rest-test -o jsonpath='{.status.succeeded}')
-     echo "job output is : $job . expecting this to be \"1\""
+     echo "job output is : \"$job\". expecting this to be \"1\""
      if [ "$job" = "1" ]; then
        echo "tests have passed, updating latest tag"
        docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest && \
