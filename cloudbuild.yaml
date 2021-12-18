@@ -4,33 +4,33 @@ steps:
 # build and push images, tagged with ${SHORT_SHA}
 ########################################
 
-- id: 'build application image'
-  name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
-
-- id: 'build test image'
-  name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
-  waitFor: ['-']
-
-# - id: 'pull app'
-#   name: 'gcr.io/cloud-builders/docker'
-#   args: ['pull', "eu.gcr.io/twint-greefield/rest_routes:latest"]
-
-# - id: 'pull test'
-#   name: 'gcr.io/cloud-builders/docker'
-#   args: ['pull', "eu.gcr.io/twint-greefield/rest_test:latest"]
-#   waitFor: ['-']
-
 # - id: 'build application image'
 #   name: 'gcr.io/cloud-builders/docker'
-#   args: ['tag', "eu.gcr.io/twint-greefield/rest_routes:latest", "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}"]
-#   waitFor: ['pull app']
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
 
 # - id: 'build test image'
 #   name: 'gcr.io/cloud-builders/docker'
-#   args: ['tag', "eu.gcr.io/twint-greefield/rest_test:latest", "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}"]
-#   waitFor: ['pull test']
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
+#   waitFor: ['-']
+
+- id: 'pull app'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', "eu.gcr.io/twint-greefield/rest_routes:latest"]
+
+- id: 'pull test'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', "eu.gcr.io/twint-greefield/rest_test:latest"]
+  waitFor: ['-']
+
+- id: 'build application image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_routes:latest", "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}"]
+  waitFor: ['pull app']
+
+- id: 'build test image'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_test:latest", "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}"]
+  waitFor: ['pull test']
 
 - id: 'push app image to registry'
   name: 'gcr.io/cloud-builders/docker'
@@ -67,9 +67,9 @@ steps:
   args:
   - '-c'
   - |
-     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f -
-     while [[ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]];
-       do echo "waiting for pod to run" && sleep 1;
+     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
+     while [[ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+       echo "waiting for pod to run" && sleep 1;
      done
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
