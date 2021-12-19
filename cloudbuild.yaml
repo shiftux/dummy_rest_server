@@ -110,20 +110,20 @@ steps:
   args:
   - '-c'
   - |
-     while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
-       $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
-       echo "waiting for job to complete" && sleep 1;
-     done
-     echo "get jobs output: $(kubectl -n twint get jobs)"
-     job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
-     echo "job output is : \"$job\". expecting this to be \"1\""
-     if [ "$job" = "1" ]; then
-       echo "tests have passed"
-     else
-       echo "tests have failed"
-       kubectl -n twint delete job rest-test
-       exit 1
-     fi
+    while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
+      $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+      echo "waiting for job to complete" && sleep 1;
+    done
+    echo "get jobs output: $(kubectl -n twint get jobs)"
+    job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
+    echo "job output is : \"$job\". expecting this to be \"1\""
+    if [ "$job" = "1" ]; then
+      echo "tests have passed"
+    else
+      echo "tests have failed"
+      kubectl -n twint delete job rest-test
+      exit 1
+    fi
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
