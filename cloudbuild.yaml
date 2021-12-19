@@ -63,12 +63,12 @@ steps:
 
 - id: 'set new images and deploy'
   name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: /bin/sh
+  entrypoint: 'bash'
   args:
   - '-c'
   - |
     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
-    while [ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') -ne "True" ]; do
+    while [[ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
       echo "waiting for pod to run" && sleep 1;
     done
   env:
