@@ -111,8 +111,8 @@ steps:
   - '-c'
   - |
     echo "waiting for job to complete" && \
-    while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
-      $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+    while [ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1"
+      $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]; do
       echo "waiting for job to complete" && sleep 1;
     done
     job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
