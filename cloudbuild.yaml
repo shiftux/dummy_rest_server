@@ -69,6 +69,8 @@ steps:
   - |
     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
     while [[ $(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+      out=$(kubectl get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}'
+      echo "status $out"
       echo "waiting for pod to run" && sleep 1;
     done
   env:
@@ -106,7 +108,7 @@ steps:
 
 - id: 'check if tests succeeded'
   name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: /bin/sh
+  entrypoint: 'bash'
   args:
   - '-c'
   - |
