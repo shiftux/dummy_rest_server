@@ -119,10 +119,10 @@ steps:
      echo "job output is : \"$job\". expecting this to be \"1\""
      if [ "$job" = "1" ]; then
        echo "tests have passed"
-       touch tests.passed
      else
        echo "tests have failed"
-       touch tests.failed
+       kubectl -n twint delete job rest-test
+       exit 1
      fi
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
@@ -135,13 +135,9 @@ steps:
   args:
   - '-c'
   - |
-     if [ -f tests.passed ]; then
-       echo "tests have passed, updating latest tag"
-       docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest
-       docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest
-     else
-       echo "tests have failed"
-     fi
+     echo "tests have passed, updating latest tag"
+     docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest
+     docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest
   waitFor: ['check if tests succeeded']
 
 - id: 'redeploy'
@@ -150,13 +146,8 @@ steps:
   args:
   - '-c'
   - |
-     if [ -f tests.passed ]; then
-       echo "tests have passed, redeploying the app"
-       kubectl apply -f k8s/app.yaml
-     else
-       echo "tests have failed"
-     fi
-     rm -rf tests.passed tests.failed
+     echo "tests have passed, redeploying the app"
+     kubectl apply -f k8s/app.yaml
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
