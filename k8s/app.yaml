@@ -43,6 +43,9 @@ spec:
       - name: rest-routes
         image: 'eu.gcr.io/twint-greefield/rest_routes:latest'
         imagePullPolicy: Always
+        env:
+          - name: RUNNING_ON_K8S
+            value: 'yes'
         ports:
         - containerPort: 5000
           name: rest-port-host
