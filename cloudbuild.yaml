@@ -116,8 +116,8 @@ steps:
     if [ "$job" = "1" ]; then
       echo "tests have passed"
     else
-      echo "tests have failed"
-      kubectl -n twint delete job rest-test
+      echo "tests have failed, reverting to latest tag"
+      kubectl -n twint apply k8s/app.yaml
       exit 1
     fi
   env:
