@@ -68,6 +68,7 @@ steps:
     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f -
     while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
       echo "waiting for pod to run" && sleep 1;
+      #TODO: add timeout
     done
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
@@ -115,6 +116,7 @@ steps:
     job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
     if [ "$job" = "1" ]; then
       echo "tests have passed"
+      #TODO: delete job
     else
       echo "tests have failed, reverting to latest tag"
       kubectl -n twint apply -f k8s/app.yaml

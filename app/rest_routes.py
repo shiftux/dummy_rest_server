@@ -13,20 +13,21 @@ json_logging.init_flask(enable_json=True)
 # json_logging.init_request_instrument(api)
 
 # init the logger as usual
-logger = logging.getLogger("test-logger")
+logger = logging.getLogger("api-logger")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 @api.errorhandler(werkzeug.exceptions.NotFound)
 def handle_not_found(e):
-    logger.error("trying to access inexisting route!")
+    logger.error("trying to access inexisting route!",
+                 extra={'props': {"severity": "ERROR"}})
     return "route not found!\n", 404
 
 
 @api.errorhandler(werkzeug.exceptions.BadRequest)
 def handle_bad_request(e):
-    logger.error("bad request!")
+    logger.error("bad request!", extra={'props': {"severity": "ERROR"}})
     return "bad request!\n", 400
 
 
