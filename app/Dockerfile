@@ -10,5 +10,6 @@ ADD app/text_replies.py /
 EXPOSE 5000
 
 RUN pip install Flask
+RUN pip install json_logging
 
 CMD ["python3", "/rest_routes.py"]
