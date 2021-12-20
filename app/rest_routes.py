@@ -2,20 +2,31 @@ from flask import Flask
 import text_replies
 import os
 import werkzeug
+import json_logging
+import logging
+import sys
 
 api = Flask(__name__)
 api.debug = True
 
+json_logging.init_flask(enable_json=True)
+# json_logging.init_request_instrument(api)
+
+# init the logger as usual
+logger = logging.getLogger("test-logger")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
 
 @api.errorhandler(werkzeug.exceptions.NotFound)
 def handle_not_found(e):
-    api.logger.error("trying to access inexisting route!")
+    logger.error("trying to access inexisting route!")
     return "route not found!\n", 404
 
 
 @api.errorhandler(werkzeug.exceptions.BadRequest)
 def handle_bad_request(e):
-    api.logger.error("bad request!")
+    logger.error("bad request!")
     return "bad request!\n", 400
 
 
