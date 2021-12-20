@@ -120,7 +120,6 @@ steps:
       echo "tests have passed"
     else
       echo "tests have failed"
-      kubectl -n twint delete job rest-test
       exit 1
     fi
   env:
@@ -157,19 +156,3 @@ steps:
 ########################################
 
 # omitted
-
-########################################
-# cleanup
-########################################
-
-- id: 'cleanup'
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: /bin/sh
-  args:
-  - '-c'
-  - |
-     kubectl -n twint delete job rest-test || exit 0
-  env:
-    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
-    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-  waitFor: ['redeploy']
