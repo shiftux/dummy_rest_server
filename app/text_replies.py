@@ -7,7 +7,7 @@ def ueli_reply():
 
 
 def michi_reply():
-    return "I need wind and water\n"
+    return "Ich hasse Powerpoint\n"
 
 
 def erich_reply():
