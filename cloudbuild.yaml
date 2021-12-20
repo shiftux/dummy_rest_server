@@ -67,7 +67,9 @@ steps:
   args:
   - '-c'
   - |
-    sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
+    kubectl -n twint delete deployment rest-routes
+    sleep 3
+    sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl create -f - && \
     while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
       echo "waiting for pod to run" && sleep 1;
     done
