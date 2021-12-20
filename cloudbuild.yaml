@@ -134,6 +134,8 @@ steps:
      echo "tests have passed, updating latest tag"
      docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest
      docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest
+     docker push eu.gcr.io/twint-greefield/rest_routes:latest
+     docker push eu.gcr.io/twint-greefield/rest_test:latest
   waitFor: ['check if tests succeeded']
 
 - id: 'redeploy'
