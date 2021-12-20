@@ -9,6 +9,14 @@ import sys
 api = Flask(__name__)
 api.debug = True
 
+try:
+    import googleclouddebugger
+    googleclouddebugger.enable(
+        breakpoint_enable_canary=True
+    )
+except ImportError:
+    pass
+
 json_logging.init_flask(enable_json=True)
 # json_logging.init_request_instrument(api)
 
