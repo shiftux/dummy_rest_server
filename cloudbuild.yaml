@@ -1,17 +1,36 @@
 steps:
 
 ########################################
-# build and push images
+# build and push images, tagged with ${SHORT_SHA}
 ########################################
+
+# - id: 'build application image'
+#   name: 'gcr.io/cloud-builders/docker'
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
+
+# - id: 'build test image'
+#   name: 'gcr.io/cloud-builders/docker'
+#   args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
+#   waitFor: ['-']
+
+- id: 'pull app'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', "eu.gcr.io/twint-greefield/rest_routes:latest"]
+
+- id: 'pull test'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', "eu.gcr.io/twint-greefield/rest_test:latest"]
+  waitFor: ['-']
 
 - id: 'build application image'
   name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}", '-f', 'app/Dockerfile', '.']
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_routes:latest", "eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}"]
+  waitFor: ['pull app']
 
 - id: 'build test image'
   name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}", '-f', 'test/Dockerfile', '.']
-  waitFor: ['-']
+  args: ['tag', "eu.gcr.io/twint-greefield/rest_test:latest", "eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}"]
+  waitFor: ['pull test']
 
 - id: 'push app image to registry'
   name: 'gcr.io/cloud-builders/docker'
@@ -28,27 +47,130 @@ steps:
 ########################################
 
 - id: 'delete old jobs'
-  name: "gcr.io/cloud-builders/kubectl"
-  args: ["delete", "job", "rest-test"]
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     gcloud container clusters get-credentials --zone "$$CLOUDSDK_COMPUTE_ZONE" "$$CLOUDSDK_CONTAINER_CLUSTER"
+     echo "get jobs output before: $(kubectl -n twint get jobs)"
+     kubectl -n twint delete job rest-test || exit 0
+     echo "get jobs output after: $(kubectl -n twint get jobs)"
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
   waitFor: ['-']
 
-- id: 'set new images'
+- id: 'set new images and deploy'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml | kubectl apply -f - && \
+    while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+      echo "waiting for pod to run" && sleep 1;
+    done
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['push app image to registry', 'push test image to registry']
+
+# - id: 'deploy app'
+#   name: "gcr.io/cloud-builders/kubectl"
+#   args: ["apply", "-f", "k8s/app.yaml"]
+#   env:
+#     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+#     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+#   waitFor: ['set new images']
+
+########################################
+# run tests
+########################################
+
+- id: 'run test job'
   name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: /bin/sh
   args:
   - '-c'
   - |
-     sed "s#eu.gcr.io/twint-greefield/rest_routes:latest#eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA}#g" k8s/app.yaml && \
-     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml
-  waitFor: ['push app image to registry', 'push app test to registry']
-
-- id: 'deploy app'
-  name: "gcr.io/cloud-builders/kubectl"
-  args: ["apply", "-f", "k8s/app.yaml"]
+     sed "s#eu.gcr.io/twint-greefield/rest_test:latest#eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA}#g" k8s/test_job.yaml | kubectl apply -f -
   env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
-  waitFor: ['set new images']
+  waitFor: ['set new images and deploy']
+
+########################################
+# tag images according to test results and redeploy
+########################################
+
+- id: 'check if tests succeeded'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    echo "waiting for job to complete" && \
+    while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
+      $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+      echo "waiting for job to complete" && sleep 1;
+    done
+    job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
+    echo "job output is : \"$job\". expecting this to be \"1\""
+    if [ "$job" = "1" ]; then
+      echo "tests have passed"
+    else
+      echo "tests have failed"
+      kubectl -n twint delete job rest-test
+      exit 1
+    fi
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['run test job']
+
+- id: 'update images'
+  name: 'gcr.io/cloud-builders/docker'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     echo "tests have passed, updating latest tag"
+     docker tag eu.gcr.io/twint-greefield/rest_routes:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_routes:latest
+     docker tag eu.gcr.io/twint-greefield/rest_test:${SHORT_SHA} eu.gcr.io/twint-greefield/rest_test:latest
+  waitFor: ['check if tests succeeded']
+
+- id: 'redeploy'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     echo "tests have passed, redeploying the app"
+     kubectl apply -f k8s/app.yaml
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['update images']
+
+########################################
+# deploy to prod cluster after successful build
+########################################
+
+# omitted
+
+########################################
+# cleanup
+########################################
+
+- id: 'cleanup'
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: /bin/sh
+  args:
+  - '-c'
+  - |
+     kubectl -n twint delete job rest-test || exit 0
+  env:
+    - "CLOUDSDK_COMPUTE_ZONE=europe-west6-a"
+    - "CLOUDSDK_CONTAINER_CLUSTER=dev-k8s-cluster"
+  waitFor: ['redeploy']

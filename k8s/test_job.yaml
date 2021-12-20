@@ -1,8 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  namespace: twint
   name: rest-test
+  namespace: twint
 spec:
   template:
     spec:
@@ -12,6 +12,6 @@ spec:
         imagePullPolicy: Always
         env:
           - name: RUNNING_ON_K8S
-            value: "yes"
+            value: 'yes'
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 1

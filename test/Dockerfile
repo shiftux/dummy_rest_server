@@ -1,3 +1,4 @@
+# NOTE: file needs to be built with the context in the repo root
 FROM ubuntu:20.10
 
 RUN apt-get update -y && \
@@ -5,7 +6,7 @@ RUN apt-get update -y && \
 
 ENV RUNNING_IN_DOCKER yes
 
-ADD test_api.py /
+ADD test/test_api.py /
 
 RUN pip install pytest requests
 
