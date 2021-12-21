@@ -46,6 +46,8 @@ spec:
         env:
           - name: RUNNING_ON_K8S
             value: 'yes'
+          - name: PYTHONUNBUFFERED
+            value: 'yes'
         ports:
         - containerPort: 5000
           name: rest-port-host
