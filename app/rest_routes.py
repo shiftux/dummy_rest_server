@@ -9,18 +9,17 @@ import sys
 api = Flask(__name__)
 api.debug = True
 
-try:
-    import googleclouddebugger
-    googleclouddebugger.enable(
-        breakpoint_enable_canary=True
-    )
-except ImportError:
-    pass
+# try:
+#     import googleclouddebugger
+#     googleclouddebugger.enable(
+#         breakpoint_enable_canary=True
+#     )
+# except ImportError:
+#     pass
 
 json_logging.init_flask(enable_json=True)
 # json_logging.init_request_instrument(api)
 
-# init the logger as usual
 logger = logging.getLogger("api-logger")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -70,4 +69,4 @@ if __name__ == '__main__':
     elif os.getenv('RUNNING_IN_DOCKER') == 'yes':
         api.run(host='0.0.0.0')
     else:
-        api.run()
+        api.run(host='0.0.0.0')

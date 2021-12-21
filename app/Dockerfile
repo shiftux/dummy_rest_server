@@ -7,10 +7,12 @@ RUN apt-get update -y && \
 ADD app/rest_routes.py /
 ADD app/text_replies.py /
 
+ENV RUNNING_IN_DOCKER=yes
+
 EXPOSE 5000
 
 RUN pip install Flask
 RUN pip install json_logging
 RUN pip install google-python-cloud-debugger
 
-CMD ["python3", "/rest_routes.py"]
+CMD ["python3", "-u", "/rest_routes.py"]
