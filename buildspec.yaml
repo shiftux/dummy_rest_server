@@ -5,9 +5,15 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo "Install AWS helper tool & kubectl"
+      - curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator
+      - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl ./aws-iam-authenticator
+      - export PATH=$PATH/:$PWD
   build:
     commands:
       - echo Build started on `date`
+      - echo "........................ $(kubectl version)"
       - echo Building the Docker image...
       - docker build -t $APP_IMAGE:$APP_TAG -f ./app/Dockerfile .
       - docker build -t $TEST_IMAGE:$TEST_TAG -f ./test/Dockerfile .
