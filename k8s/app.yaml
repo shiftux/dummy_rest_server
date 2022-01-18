@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: rest-routes
-        image: 'eu.gcr.io/twint-greefield/rest_routes:latest'
+        image: '985266629220.dkr.ecr.eu-central-1.amazonaws.com/greenfield_container_repo:app-latest'
         imagePullPolicy: Always
         env:
           - name: RUNNING_ON_K8S
