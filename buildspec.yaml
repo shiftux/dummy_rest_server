@@ -1,5 +1,8 @@
 version: 0.2
 
+env:
+  shell: bash
+
 phases:
   pre_build:
     commands:
@@ -13,7 +16,6 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo "........................ $(kubectl version)"
       - echo Building the Docker image...
       - docker build -t $APP_IMAGE:$APP_TAG -f ./app/Dockerfile .
       - docker build -t $TEST_IMAGE:$TEST_TAG -f ./test/Dockerfile .
@@ -25,3 +27,4 @@ phases:
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG
+      - echo "........................ $(kubectl version)"
