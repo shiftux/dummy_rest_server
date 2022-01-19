@@ -15,7 +15,7 @@ phases:
       - export PATH=$PATH/:$PWD
   pre_build:
     commands:
-      - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --role-arn arn:aws:iam::985266629220:role/Greenfield-CodeBuildEKSkubectlRole --name "$CLUSTER_NAME"
+      - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
       - kubectl get nodes
   build:
