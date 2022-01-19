@@ -15,9 +15,10 @@ phases:
       - export PATH=$PATH/:$PWD
   pre_build:
     commands:
+      - aws sts get-caller-identity
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
-      - kubectl get pods
+      - kubectl get pods -n twint
   build:
     commands:
       - echo Build started on `date`
