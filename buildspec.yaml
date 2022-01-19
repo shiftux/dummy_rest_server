@@ -52,7 +52,6 @@ phases:
       - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
       - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
           echo "waiting for pod to run" && sleep 1;
-        done
-          #TODO: add timeout;
+        done #TODO: add timeout;
 
 
