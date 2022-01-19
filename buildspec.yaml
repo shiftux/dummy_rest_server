@@ -16,9 +16,9 @@ phases:
   pre_build:
     commands:
       - aws sts get-caller-identity
-      - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
+      - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME" --role-arn arn:aws:iam::985266629220:role/Greenfield-CodeBuildEKSkubectlRole
       - export KUBECONFIG=$HOME/.kube/config
-      - kubectl get pods -n twint
+      - kubectl get nodes
   build:
     commands:
       - echo Build started on `date`
