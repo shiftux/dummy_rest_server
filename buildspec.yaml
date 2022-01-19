@@ -6,17 +6,33 @@ env:
 phases:
   install:
     commands:
-      - printenv
-      - echo Logging in to Amazon ECR...
+      # Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - echo "Install AWS helper tool & kubectl"
+      # Install AWS helper tool & kubectl
       - curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator
       - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
       - chmod +x ./kubectl ./aws-iam-authenticator
       - export PATH=$PATH/:$PWD
-      - export TMP_TAG=$(echo $CODEBUILD_BUILD_ID | awk -F ":" '{print $2}')
+      - pwd
+      - ls -la
   pre_build:
     commands:
+      # use build uuid as tag
+      - export TMP_TAG=$(echo $CODEBUILD_BUILD_ID | awk -F ":" '{print $2}')
+  build:
+    commands:
+      - echo Build started on `date`
+      # building and pushing the Docker images
+  #     - docker build -t "$APP_IMAGE:app-$TMP_TAG" -f ./app/Dockerfile .
+  #     - docker build -t "$TEST_IMAGE:test-$TMP_TAG" -f ./test/Dockerfile .
+  #     - docker tag "$APP_IMAGE:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+  #     - docker tag "$TEST_IMAGE:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+  #     - echo Pushing the Docker image...
+  #     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
+  #     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
+  post_build:
+    commands:
+      - echo Build completed on `date`
       - echo "connecting to the cluster"
       - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
       - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
@@ -26,18 +42,4 @@ phases:
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
       - kubectl get nodes
-  build:
-    commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t "$APP_IMAGE:app-$TMP_TAG" -f ./app/Dockerfile .
-      - docker build -t "$TEST_IMAGE:test-$TMP_TAG" -f ./test/Dockerfile .
-      - docker tag "$APP_IMAGE:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
-      - docker tag "$TEST_IMAGE:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
-      - echo Pushing the Docker image...
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
-  post_build:
-    commands:
-      - echo Build completed on `date`
 
