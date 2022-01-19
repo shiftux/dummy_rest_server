@@ -35,8 +35,8 @@ phases:
       - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
       - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
       - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
   post_build:
     commands:
       - echo Build completed on `date`
@@ -48,10 +48,32 @@ phases:
       - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
-      # deploying the application with the just recently built image
+      # deploying the application with the just recently built image and wait for it to run
       - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
       - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
           echo "waiting for pod to run" && sleep 1;
-        done #TODO: add timeout;
+        done        #TODO: add timeout;
+      # run tests and wait for completion
+      - kubectl -n twint delete job rest-test || exit 0
+      - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:test-$TMP_TAG#g" k8s/test_job.yaml | kubectl apply -f -
+      - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
+        $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+          echo "waiting for job to complete" && sleep 1;
+        done
+      - job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
+      - if [ "$job" = "1" ]; then
+           echo "tests have passed";
+         else
+           echo "tests have failed, reverting to latest tag";
+           kubectl -n twint apply -f k8s/app.yaml;
+           exit 1;
+         fi
+      # update images if tests have passed
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:t$TEST_TAG"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:t$TEST_TAG"
+      # redeploy with latest tag
+      - kubectl -n twint apply -f k8s/app.yaml
 
 
