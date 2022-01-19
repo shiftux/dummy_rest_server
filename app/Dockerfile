@@ -1,5 +1,5 @@
 # NOTE: file needs to be built with the context in the repo root
-FROM ubuntu:latest
+FROM public.ecr.aws/lts/ubuntu:latest
 
 RUN apt update -y && \
   apt install -y python3-pip python3-dev
