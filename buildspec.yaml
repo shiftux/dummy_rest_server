@@ -30,6 +30,13 @@ phases:
   #     - echo Pushing the Docker image...
   #     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
   #     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
+      # workaround to skip long building steps
+      - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
   post_build:
     commands:
       - echo Build completed on `date`
@@ -44,7 +51,7 @@ phases:
       # deploying the application with the just recently built image
       - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
       - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
-      -   echo "waiting for pod to run" && sleep 1;
+          echo "waiting for pod to run" && sleep 1;
           #TODO: add timeout
-      - done
+       done
 
