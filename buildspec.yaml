@@ -33,7 +33,7 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo "connecting to the cluster"
+      # connecting to the cluster
       - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
       - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
       - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
@@ -41,5 +41,10 @@ phases:
       - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
-      - kubectl get nodes
+      # deploying the application with the just recently built image
+      - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
+      - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+      -   echo "waiting for pod to run" && sleep 1;
+          #TODO: add timeout
+      - done
 
