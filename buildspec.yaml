@@ -13,7 +13,6 @@ phases:
       - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
       - chmod +x ./kubectl ./aws-iam-authenticator
       - export PATH=$PATH/:$PWD
-      - kubectl version
   pre_build:
     commands:
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --role-arn arn:aws:iam::985266629220:role/Greenfield-CodeBuildEKSkubectlRole --name "$CLUSTER_NAME"
