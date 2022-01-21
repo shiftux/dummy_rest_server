@@ -21,20 +21,20 @@ phases:
     commands:
       - echo Build started on `date`
       # building and pushing the Docker images
-      # - docker build -t "$APP_IMAGE:app-$TMP_TAG" -f ./app/Dockerfile .
-      # - docker build -t "$TEST_IMAGE:test-$TMP_TAG" -f ./test/Dockerfile .
-      # - docker tag "$APP_IMAGE:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
-      # - docker tag "$TEST_IMAGE:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
-      # - echo Pushing the Docker image...
-      # - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
-      # - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
+      - docker build -t "$APP_IMAGE:app-$TMP_TAG" -f ./app/Dockerfile .
+      - docker build -t "$TEST_IMAGE:test-$TMP_TAG" -f ./test/Dockerfile .
+      - docker tag "$APP_IMAGE:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      - docker tag "$TEST_IMAGE:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
       # workaround to skip long building steps while developing
-      - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
-      - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
-      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
-      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
-      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
-      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      # - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      # - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
+      # - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      # - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      # - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      # - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
   post_build:
     commands:
       - echo Build completed on `date`
