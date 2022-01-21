@@ -69,4 +69,4 @@ if __name__ == '__main__':
     elif os.getenv('RUNNING_IN_DOCKER') == 'yes':
         api.run(host='0.0.0.0')
     else:
-        api.run(host='0.0.0.0')
+        api.run()
