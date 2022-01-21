@@ -57,8 +57,6 @@ phases:
       - i=0
       - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
           echo "waiting for job to complete" && sleep 1;
-          kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}';
-          kubectl -n twint get job rest-test -o jsonpath='{.status.failed}';
           if [ "$i" -ge 10 ]; then break; fi;
           ((i++));
         done
