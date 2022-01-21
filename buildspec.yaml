@@ -55,11 +55,15 @@ phases:
       # run tests and wait for completion
       - kubectl -n twint delete job rest-test || exit 0
       - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:test-$TMP_TAG#g" k8s/test_job.yaml | kubectl apply -f -
-      - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && \
-        $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+      - i=0
+      - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
           echo "waiting for job to complete" && sleep 1;
           kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}';
           kubectl -n twint get job rest-test -o jsonpath='{.status.failed}';
+          if [ "$i" -ge 10 ]; then
+              break;
+          fi
+          ((i++))
         done
       - job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
       - if [ "$job" = "1" ]; then
