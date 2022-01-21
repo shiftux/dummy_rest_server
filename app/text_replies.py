@@ -15,4 +15,4 @@ def erich_reply():
 
 
 def sandro_reply():
-    return "Cloud mover*\n"
+    return "Cloud mover\n"
