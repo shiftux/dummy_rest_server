@@ -1,0 +1,79 @@
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    commands:
+      # Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      # Install AWS helper tool & kubectl
+      - curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator
+      - curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl ./aws-iam-authenticator
+      - export PATH=$PATH/:$PWD
+  pre_build:
+    commands:
+      # use build uuid as tag
+      - export TMP_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7})
+  build:
+    commands:
+      - echo Build started on `date`
+      # building and pushing the Docker images
+      - docker build -t "$APP_IMAGE:app-$TMP_TAG" -f ./app/Dockerfile .
+      - docker build -t "$TEST_IMAGE:test-$TMP_TAG" -f ./test/Dockerfile .
+      - docker tag "$APP_IMAGE:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      - docker tag "$TEST_IMAGE:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG
+      # workaround to skip long building steps while developing
+      # - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      # - docker pull "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
+      # - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      # - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+      # - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG"
+      # - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG"
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      # connecting to the cluster
+      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
+      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+      - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
+      - export KUBECONFIG=$HOME/.kube/config
+      # deploying the application with the just recently built image and wait for it to run
+      - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
+      - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do
+          echo "waiting for pod to run" && sleep 1;
+        done        #TODO: add timeout;
+      # run tests and wait for completion
+      - kubectl -n twint delete job rest-test || exit 0
+      - sed "s#greenfield_container_repo:test-latest#greenfield_container_repo:test-$TMP_TAG#g" k8s/test_job.yaml | kubectl apply -f -
+      - i=0
+      - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
+          echo "waiting for job to complete" && sleep 1;
+          if [ "$i" -ge 10 ]; then break; fi;
+          ((i++));
+        done
+      - job=$(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}')
+      - if [ "$job" = "1" ]; then
+           echo "tests have passed";
+         else
+           echo "tests have failed, reverting to latest tag";
+           kubectl -n twint apply -f k8s/app.yaml;
+           exit 1;
+         fi
+      # update images if tests have passed
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:app-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      - docker tag "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:test-$TMP_TAG" "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$APP_TAG"
+      - docker push "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$TEST_TAG"
+      # redeploy with latest tag
+      - kubectl -n twint apply -f k8s/app.yaml
+
+

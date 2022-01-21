@@ -8,7 +8,7 @@ spec:
     spec:
       containers:
       - name: rest-test
-        image: eu.gcr.io/twint-greefield/rest_test:latest
+        image: 985266629220.dkr.ecr.eu-central-1.amazonaws.com/greenfield_container_repo:test-latest
         imagePullPolicy: Always
         env:
           - name: RUNNING_ON_K8S
