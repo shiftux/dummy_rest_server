@@ -14,6 +14,7 @@ phases:
       - chmod +x ./kubectl ./aws-iam-authenticator
       - export PATH=$PATH/:$PWD
       - cat test/test_api.py
+      - printenv
   pre_build:
     commands:
       # use build uuid as tag
@@ -54,7 +55,7 @@ phases:
         done        #TODO: add timeout;
       # run tests and wait for completion
       - kubectl -n twint delete job rest-test || exit 0
-      - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:test-$TMP_TAG#g" k8s/test_job.yaml | kubectl apply -f -
+      - sed "s#greenfield_container_repo:test-latest#greenfield_container_repo:test-$TMP_TAG#g" k8s/test_job.yaml | kubectl apply -f -
       - i=0
       - while [[ $(kubectl -n twint get job rest-test -o jsonpath='{.status.succeeded}') != "1" && $(kubectl -n twint get job rest-test -o jsonpath='{.status.failed}') != "2" ]]; do
           echo "waiting for job to complete" && sleep 1;
