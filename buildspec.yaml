@@ -67,7 +67,7 @@ phases:
            echo "tests have failed, reverting to latest tag";
            kubectl -n twint apply -f k8s/app.yaml;
            echo "****************************************************************"
-           kubectl -n twint logs $(kc get pods | grep rest-test | grep Error | awk '{print $1}' | head -n 1)
+           kubectl -n twint logs $(kubectl -n twint get pods | grep rest-test | grep Error | awk '{print $1}' | head -n 1)
            exit 1;
          fi
       # update images if tests have passed
