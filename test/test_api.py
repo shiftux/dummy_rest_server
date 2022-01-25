@@ -34,7 +34,7 @@ replies = [
     ("ueli", "Ich möchte auch so eine Frisur haben wie Dirk\n"),
     ("michi", "Ich hasse Powerpoint\n"),
     ("erich", "Maslov hat das WiFi ganz unten in der Pyramide vergessen\n"),
-    ("sandro", "Cloud mover\n")
+    ("sandro", "Cloud mover!!!\n")
 ]
 
 
