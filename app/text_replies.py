@@ -1,18 +1,18 @@
-def dirk_reply():
-    return "Global-Galaktisch\n"
+def elena_reply():
+    return "New Girl\n"
 
 
-def ueli_reply():
-    return "Ich möchte auch so eine Frisur haben wie Dirk\n"
+def sebi_reply():
+    return "Chief Raclette Officer\n"
 
 
-def michi_reply():
-    return "Ich hasse Powerpoint\n"
+def chris_reply():
+    return "dickesB\n"
 
 
-def erich_reply():
-    return "Maslov hat das WiFi ganz unten in der Pyramide vergessen\n"
+def schwinggi_reply():
+    return "Muuuuh\n"
 
 
 def sandro_reply():
-    return "Cloud mover!!!\n"
+    return "Cloud mover\n"
