@@ -13,10 +13,10 @@ else:
     port = 5000
 
 endpoints = [
-    "dirk",
-    "erich",
-    "ueli",
-    "michi",
+    "elena",
+    "sebi",
+    "chris",
+    "schwinggi",
     "sandro",
 ]
 
