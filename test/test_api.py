@@ -13,10 +13,10 @@ else:
     port = 5000
 
 endpoints = [
-    "dirk",
-    "erich",
-    "ueli",
-    "michi",
+    "elena",
+    "sebi",
+    "chris",
+    "schwinggi",
     "sandro",
 ]
 
@@ -30,10 +30,10 @@ def test_status200(endpoint):
 
 
 replies = [
-    ("dirk", "Global-Galaktisch\n"),
-    ("ueli", "Ich möchte auch so eine Frisur haben wie Dirk\n"),
-    ("michi", "Ich hasse Powerpoint\n"),
-    ("erich", "Maslov hat das WiFi ganz unten in der Pyramide vergessen\n"),
+    ("elena", "New Girl\n"),
+    ("sebi", "Chief Raclette Officer\n"),
+    ("chris", "dickesB\n"),
+    ("schwinggi", "Muuuuh\n"),
     ("sandro", "Cloud mover\n")
 ]
 

@@ -39,13 +39,17 @@ phases:
     commands:
       - echo Build completed on `date`
       # connecting to the cluster
+      - rm -rf $HOME/.kube/config
       - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
+      - echo $CREDENTIALS
       - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
       - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
       - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
       - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
       - aws eks --region "$AWS_DEFAULT_REGION" update-kubeconfig --name "$CLUSTER_NAME"
       - export KUBECONFIG=$HOME/.kube/config
+      - cat $HOME/.kube/config
+      - kubectl -n twint get nodes
       # deploying the application with the just recently built image and wait for it to run
       - sed "s#greenfield_container_repo:app-latest#greenfield_container_repo:app-$TMP_TAG#g" k8s/app.yaml | kubectl apply -f -
       - while [[ $(kubectl -n twint get pods -l app=rest -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do

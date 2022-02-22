@@ -38,24 +38,24 @@ def handle_bad_request(e):
     return "bad request!\n", 400
 
 
-@api.route('/dirk', methods=['GET'])
-def get_dirk():
-    return text_replies.dirk_reply()
+@api.route('/elena', methods=['GET'])
+def get_elena():
+    return text_replies.elena_reply()
 
 
-@api.route('/erich', methods=['GET'])
-def get_erich():
-    return text_replies.erich_reply()
+@api.route('/sebi', methods=['GET'])
+def get_sebi():
+    return text_replies.sebi_reply()
 
 
-@api.route('/michi', methods=['GET'])
-def get_michi():
-    return text_replies.michi_reply()
+@api.route('/chris', methods=['GET'])
+def get_chris():
+    return text_replies.chris_reply()
 
 
-@api.route('/ueli', methods=['GET'])
-def get_ueli():
-    return text_replies.ueli_reply()
+@api.route('/schwinggi', methods=['GET'])
+def get_schwinggi():
+    return text_replies.schwinggi_reply()
 
 
 @api.route('/sandro', methods=['GET'])
