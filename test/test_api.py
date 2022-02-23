@@ -32,7 +32,7 @@ def test_status200(endpoint):
 replies = [
     ("elena", "New Girl\n"),
     ("sebi", "Chief Raclette Officer\n"),
-    ("chris", "dickesB\n"),
+    ("chris", "berlin\n"),
     ("schwinggi", "Muuuuh\n"),
     ("sandro", "Cloud mover\n")
 ]
