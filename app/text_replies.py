@@ -7,7 +7,7 @@ def sebi_reply():
 
 
 def chris_reply():
-    return "dickesB\n"
+    return "berlin\n"
 
 
 def schwinggi_reply():
